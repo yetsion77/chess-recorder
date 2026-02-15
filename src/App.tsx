@@ -49,10 +49,11 @@ export default function App() {
       name: string,
       description: string,
       category: Sequence['category'],
+      orientation: Sequence['orientation'],
       moves: Sequence['moves'],
       fens: string[]
     ) => {
-      await saveSequence(name, description, category, moves, fens)
+      await saveSequence(name, description, category, orientation, moves, fens)
     },
     [saveSequence]
   )
@@ -63,10 +64,11 @@ export default function App() {
       name: string,
       description: string,
       category: Sequence['category'],
+      orientation: Sequence['orientation'],
       moves: Sequence['moves'],
       fens: string[]
     ) => {
-      await updateSequence(id, name, description, category, moves, fens)
+      await updateSequence(id, name, description, category, orientation, moves, fens)
     },
     [updateSequence]
   )

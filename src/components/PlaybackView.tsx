@@ -25,14 +25,38 @@ const SPEEDS = [
   { label: '3x', ms: 333 },
 ]
 
+function useBoardSize() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState(480)
+
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.clientWidth
+        setSize(Math.min(w, 480))
+      } else {
+        const w = window.innerWidth - 48
+        setSize(Math.min(w, 480))
+      }
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  return { containerRef, size }
+}
+
 export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
   const [currentIndex, setCurrentIndex] = useState(-1)
   const [isPlaying, setIsPlaying] = useState(false)
   const [speedIndex, setSpeedIndex] = useState(1)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const { containerRef, size } = useBoardSize()
 
   const totalMoves = sequence.moves.length
   const currentFen = sequence.fens[currentIndex + 1] || sequence.fens[0]
+  const orientation = sequence.orientation || 'white'
 
   const stopPlayback = useCallback(() => {
     setIsPlaying(false)
@@ -95,15 +119,15 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
   const progress = totalMoves > 0 ? ((currentIndex + 1) / totalMoves) * 100 : 0
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
       {/* Top Bar */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between sm:mb-6">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-slate-400 transition-colors hover:text-white"
         >
           <ArrowRight className="h-5 w-5" />
-          חזרה לספרייה
+          <span className="hidden sm:inline">חזרה לספרייה</span>
         </button>
         <div className="flex items-center gap-3">
           <span
@@ -115,26 +139,27 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
       </div>
 
       {/* Title */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white">{sequence.name}</h2>
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-xl font-bold text-white sm:text-2xl">{sequence.name}</h2>
         {sequence.description && (
-          <p className="mt-1 text-slate-400">{sequence.description}</p>
+          <p className="mt-1 text-sm text-slate-400 sm:text-base">{sequence.description}</p>
         )}
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row">
+      <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row">
         {/* Chess Board */}
-        <div className="flex-shrink-0">
-          <div className="overflow-hidden rounded-2xl shadow-2xl shadow-black/30" dir="ltr">
+        <div className="w-full flex-shrink-0 lg:w-auto" ref={containerRef}>
+          <div className="mx-auto overflow-hidden rounded-2xl shadow-2xl shadow-black/30" dir="ltr" style={{ width: size, height: size }}>
             <Chessboard
               options={{
                 position: currentFen,
+                boardOrientation: orientation,
                 allowDragging: false,
                 animationDurationInMs: 300,
                 boardStyle: {
                   borderRadius: '0',
-                  width: '480px',
-                  height: '480px',
+                  width: `${size}px`,
+                  height: `${size}px`,
                 },
                 darkSquareStyle: { backgroundColor: '#779952' },
                 lightSquareStyle: { backgroundColor: '#edeed1' },
@@ -143,7 +168,7 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
           </div>
 
           {/* Progress Bar */}
-          <div className="mt-4 overflow-hidden rounded-full bg-slate-800">
+          <div className="mx-auto mt-3 overflow-hidden rounded-full bg-slate-800 sm:mt-4" style={{ maxWidth: size }}>
             <div
               className="h-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -151,7 +176,7 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
           </div>
 
           {/* Playback Controls */}
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mx-auto mt-3 flex items-center justify-between" style={{ maxWidth: size }}>
             <div className="flex items-center gap-1">
               <button
                 onClick={goToStart}
@@ -192,12 +217,12 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
             </div>
 
             {/* Speed Control */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               {SPEEDS.map((speed, i) => (
                 <button
                   key={speed.label}
                   onClick={() => setSpeedIndex(i)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                  className={`rounded-lg px-2 py-1 text-xs font-medium transition-all sm:px-2.5 ${
                     speedIndex === i
                       ? 'bg-amber-500/20 text-amber-400'
                       : 'text-slate-500 hover:text-slate-300'
@@ -220,7 +245,7 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
           <div className="border-b border-white/5 px-4 py-3">
             <h3 className="text-sm font-semibold text-white">מהלכים</h3>
           </div>
-          <div className="flex-1">
+          <div className="h-48 flex-1 sm:h-auto">
             <MoveList
               moves={sequence.moves}
               currentMoveIndex={currentIndex}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Chessboard } from 'react-chessboard'
 import {
   Save,
@@ -6,10 +6,11 @@ import {
   RotateCcw,
   ArrowRight,
   X,
+  RefreshCw,
 } from 'lucide-react'
 import { useChessGame } from '../hooks/useChessGame'
 import { MoveList } from './MoveList'
-import type { Sequence, SequenceCategory } from '../types'
+import type { Sequence, SequenceCategory, BoardOrientation } from '../types'
 import { CATEGORY_LABELS } from '../types'
 
 interface RecordViewProps {
@@ -18,6 +19,7 @@ interface RecordViewProps {
     name: string,
     description: string,
     category: SequenceCategory,
+    orientation: BoardOrientation,
     moves: Sequence['moves'],
     fens: string[]
   ) => Promise<void>
@@ -26,10 +28,33 @@ interface RecordViewProps {
     name: string,
     description: string,
     category: SequenceCategory,
+    orientation: BoardOrientation,
     moves: Sequence['moves'],
     fens: string[]
   ) => Promise<void>
   onCancel: () => void
+}
+
+function useBoardSize() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState(480)
+
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.clientWidth
+        setSize(Math.min(w, 480))
+      } else {
+        const w = window.innerWidth - 48
+        setSize(Math.min(w, 480))
+      }
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  return { containerRef, size }
 }
 
 export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordViewProps) {
@@ -43,9 +68,13 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
   const [category, setCategory] = useState<SequenceCategory>(
     editSequence?.category || 'opening'
   )
+  const [orientation, setOrientation] = useState<BoardOrientation>(
+    editSequence?.orientation || 'white'
+  )
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [showSaveForm, setShowSaveForm] = useState(false)
+  const { containerRef, size } = useBoardSize()
 
   const displayMoves = editSequence && moves.length === 0 ? editSequence.moves : moves
   const displayFens = editSequence && fens.length <= 1 ? editSequence.fens : fens
@@ -88,11 +117,12 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
           name,
           description,
           category,
+          orientation,
           displayMoves,
           displayFens
         )
       } else {
-        await onSave(name, description, category, displayMoves, displayFens)
+        await onSave(name, description, category, orientation, displayMoves, displayFens)
       }
       onCancel()
     } catch (err: any) {
@@ -103,17 +133,17 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
       {/* Top Bar */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between sm:mb-6">
         <button
           onClick={onCancel}
           className="flex items-center gap-2 text-slate-400 transition-colors hover:text-white"
         >
           <ArrowRight className="h-5 w-5" />
-          חזרה לספרייה
+          <span className="hidden sm:inline">חזרה לספרייה</span>
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {isCheckmate && (
             <div className="animate-pulse rounded-full bg-red-500/20 px-3 py-1 text-xs font-bold text-red-400 ring-1 ring-red-500/40">
               מט!
@@ -137,20 +167,21 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
         </div>
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row">
+      <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row">
         {/* Chess Board */}
-        <div className="flex-shrink-0">
-          <div className={`relative overflow-hidden rounded-2xl shadow-2xl shadow-black/30 ${isCheckmate ? 'checkmate-glow' : ''}`} dir="ltr">
+        <div className="w-full flex-shrink-0 lg:w-auto" ref={containerRef}>
+          <div className={`relative mx-auto overflow-hidden rounded-2xl shadow-2xl shadow-black/30 ${isCheckmate ? 'checkmate-glow' : ''}`} dir="ltr" style={{ width: size, height: size }}>
             <Chessboard
               options={{
                 position,
+                boardOrientation: orientation,
                 onPieceDrop: handleDrop,
                 onSquareClick,
                 animationDurationInMs: 200,
                 boardStyle: {
                   borderRadius: '0',
-                  width: '480px',
-                  height: '480px',
+                  width: `${size}px`,
+                  height: `${size}px`,
                 },
                 squareStyles,
                 darkSquareStyle: { backgroundColor: '#779952' },
@@ -174,7 +205,14 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
           </div>
 
           {/* Board Controls */}
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mx-auto mt-3 flex items-center gap-2 sm:mt-4" style={{ maxWidth: size }}>
+            <button
+              onClick={() => setOrientation(o => o === 'white' ? 'black' : 'white')}
+              className="flex items-center justify-center gap-2 rounded-xl bg-white/5 px-3 py-3 text-sm font-medium text-slate-300 transition-all hover:bg-white/10"
+              title="הפוך לוח"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
             <button
               onClick={undoMove}
               disabled={moves.length === 0}
@@ -192,6 +230,11 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
               איפוס
             </button>
           </div>
+
+          {/* Orientation indicator */}
+          <div className="mx-auto mt-2 text-center text-xs text-slate-500" style={{ maxWidth: size }}>
+            {orientation === 'white' ? 'מקליט עבור לבן (לבן למטה)' : 'מקליט עבור שחור (שחור למטה)'}
+          </div>
         </div>
 
         {/* Sidebar */}
@@ -201,7 +244,7 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
             <div className="border-b border-white/5 px-4 py-3">
               <h3 className="text-sm font-semibold text-white">מהלכים</h3>
             </div>
-            <div className="h-64 lg:h-80">
+            <div className="h-48 sm:h-64 lg:h-80">
               <MoveList moves={displayMoves} />
             </div>
           </div>

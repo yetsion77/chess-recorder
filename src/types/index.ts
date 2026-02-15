@@ -5,11 +5,14 @@ export interface ChessMove {
   promotion?: string
 }
 
+export type BoardOrientation = 'white' | 'black'
+
 export interface Sequence {
   id: string
   name: string
   description: string
   category: SequenceCategory
+  orientation: BoardOrientation
   moves: ChessMove[]
   fens: string[]
   createdAt: number
