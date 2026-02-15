@@ -18,7 +18,7 @@ export function Header({ view, sequenceName, onNavigate }: HeaderProps) {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/20">
             <Crown className="h-5 w-5 text-slate-900" />
           </div>
-          <h1 className="text-xl font-bold text-white">Chess Recorder</h1>
+          <h1 className="text-xl font-bold text-white">משחק המלכים</h1>
         </button>
 
         {view !== 'library' && (
