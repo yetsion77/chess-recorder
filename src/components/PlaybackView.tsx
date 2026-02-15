@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Chessboard } from 'react-chessboard'
+import { Chess } from 'chess.js'
 import {
   Play,
   Pause,
@@ -58,6 +59,20 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
   const totalMoves = sequence.moves.length
   const currentFen = sequence.fens[currentIndex + 1] || sequence.fens[0]
   const orientation = sequence.orientation || 'white'
+
+  // Detect checkmate and check at the current position
+  const { isCheckmate, isCheck, turn } = useMemo(() => {
+    try {
+      const chess = new Chess(currentFen)
+      return {
+        isCheckmate: chess.isCheckmate(),
+        isCheck: chess.inCheck(),
+        turn: chess.turn(),
+      }
+    } catch {
+      return { isCheckmate: false, isCheck: false, turn: 'w' as const }
+    }
+  }, [currentFen])
 
   // Play sound when move index changes
   const prevIndexRef = useRef(-1)
@@ -144,7 +159,17 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
           <ArrowRight className="h-5 w-5" />
           <span className="hidden sm:inline">חזרה לספרייה</span>
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {isCheckmate && (
+            <div className="animate-pulse rounded-full bg-red-500/20 px-3 py-1 text-xs font-bold text-red-400 ring-1 ring-red-500/40">
+              מט!
+            </div>
+          )}
+          {isCheck && !isCheckmate && (
+            <div className="rounded-full bg-orange-500/20 px-3 py-1 text-xs font-bold text-orange-400 ring-1 ring-orange-500/40">
+              שח!
+            </div>
+          )}
           <span
             className={`rounded-full bg-gradient-to-r px-3 py-1 text-xs font-medium text-white ${CATEGORY_COLORS[sequence.category]}`}
           >
@@ -164,7 +189,7 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
       <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row">
         {/* Chess Board */}
         <div className="w-full flex-shrink-0 lg:w-auto" ref={containerRef}>
-          <div className="mx-auto overflow-hidden rounded-2xl shadow-2xl shadow-black/30" dir="ltr" style={{ width: size, height: size }}>
+          <div className={`relative mx-auto overflow-hidden rounded-2xl shadow-2xl shadow-black/30 ${isCheckmate ? 'checkmate-glow' : ''}`} dir="ltr" style={{ width: size, height: size }}>
             <Chessboard
               options={{
                 position: currentFen,
@@ -180,6 +205,20 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
                 lightSquareStyle: { backgroundColor: '#edeed1' },
               }}
             />
+
+            {/* Checkmate overlay */}
+            {isCheckmate && (
+              <div className="checkmate-overlay absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div className="checkmate-badge rounded-2xl bg-gradient-to-br from-red-600 to-red-800 px-8 py-4 shadow-2xl shadow-red-500/30">
+                  <div className="text-center text-3xl font-black text-white">
+                    מט!
+                  </div>
+                  <div className="mt-1 text-center text-sm text-red-200">
+                    {turn === 'w' ? 'שחור ניצח' : 'לבן ניצח'}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Progress Bar */}

@@ -58,9 +58,18 @@ export function useChessGame() {
 
   const handleSquareClick = useCallback((square: string) => {
     if (selectedSquare) {
+      // Click same square again → deselect
+      if (square === selectedSquare) {
+        setSelectedSquare(null)
+        setLegalMoves([])
+        return
+      }
+
+      // Try to move to the clicked square
       const moved = applyMove(selectedSquare, square)
       if (moved) return
 
+      // Clicked a different friendly piece → switch selection
       const piece = game.get(square as any)
       if (piece && piece.color === game.turn()) {
         setSelectedSquare(square)
@@ -69,6 +78,7 @@ export function useChessGame() {
         return
       }
 
+      // Clicked an invalid square → deselect
       setSelectedSquare(null)
       setLegalMoves([])
       return
