@@ -208,7 +208,7 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
 
             {/* Checkmate overlay */}
             {isCheckmate && (
-              <div className="checkmate-overlay absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="checkmate-overlay absolute inset-0 flex items-center justify-center bg-black/30">
                 <div className="checkmate-badge rounded-2xl bg-gradient-to-br from-red-600 to-red-800 px-8 py-4 shadow-2xl shadow-red-500/30">
                   <div className="text-center text-3xl font-black text-white">
                     מט!

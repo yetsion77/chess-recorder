@@ -59,7 +59,7 @@ function useBoardSize() {
 
 export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordViewProps) {
   const {
-    position, moves, fens, turn, makeMove,
+    position, moves, fens, turn,
     handleSquareClick, selectedSquare, legalMoves,
     undoMove, reset, isCheckmate, isCheck,
   } = useChessGame()
@@ -78,11 +78,6 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
 
   const displayMoves = editSequence && moves.length === 0 ? editSequence.moves : moves
   const displayFens = editSequence && fens.length <= 1 ? editSequence.fens : fens
-
-  const handleDrop = ({ sourceSquare, targetSquare }: { piece: any; sourceSquare: string; targetSquare: string | null }) => {
-    if (!targetSquare) return false
-    return makeMove(sourceSquare, targetSquare)
-  }
 
   const onSquareClick = ({ square }: { piece: any; square: string }) => {
     handleSquareClick(square)
@@ -175,7 +170,7 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
               options={{
                 position,
                 boardOrientation: orientation,
-                onPieceDrop: handleDrop,
+                allowDragging: false,
                 onSquareClick,
                 animationDurationInMs: 200,
                 boardStyle: {
@@ -191,7 +186,7 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
 
             {/* Checkmate overlay */}
             {isCheckmate && (
-              <div className="checkmate-overlay absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="checkmate-overlay absolute inset-0 flex items-center justify-center bg-black/30">
                 <div className="checkmate-badge rounded-2xl bg-gradient-to-br from-red-600 to-red-800 px-8 py-4 shadow-2xl shadow-red-500/30">
                   <div className="text-center text-3xl font-black text-white">
                     מט!
