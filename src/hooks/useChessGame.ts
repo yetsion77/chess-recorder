@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Chess } from 'chess.js'
 import type { ChessMove } from '../types'
+import { playMoveSound, playCaptureSound } from '../lib/sounds'
 
 export function useChessGame() {
   const [game, setGame] = useState(new Chess())
@@ -27,6 +28,13 @@ export function useChessGame() {
     })
 
     if (result) {
+      // Play appropriate sound
+      if (result.captured) {
+        playCaptureSound()
+      } else {
+        playMoveSound()
+      }
+
       const newMove: ChessMove = {
         from,
         to,

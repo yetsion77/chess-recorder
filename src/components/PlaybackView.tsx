@@ -11,6 +11,7 @@ import {
 import type { Sequence } from '../types'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '../types'
 import { MoveList } from './MoveList'
+import { playMoveSound, playCaptureSound } from '../lib/sounds'
 
 interface PlaybackViewProps {
   sequence: Sequence
@@ -57,6 +58,20 @@ export function PlaybackView({ sequence, onBack }: PlaybackViewProps) {
   const totalMoves = sequence.moves.length
   const currentFen = sequence.fens[currentIndex + 1] || sequence.fens[0]
   const orientation = sequence.orientation || 'white'
+
+  // Play sound when move index changes
+  const prevIndexRef = useRef(-1)
+  useEffect(() => {
+    if (currentIndex >= 0 && currentIndex !== prevIndexRef.current) {
+      const move = sequence.moves[currentIndex]
+      if (move?.san?.includes('x')) {
+        playCaptureSound()
+      } else {
+        playMoveSound()
+      }
+    }
+    prevIndexRef.current = currentIndex
+  }, [currentIndex, sequence.moves])
 
   const stopPlayback = useCallback(() => {
     setIsPlaying(false)
