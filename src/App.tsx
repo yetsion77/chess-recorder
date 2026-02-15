@@ -1,12 +1,27 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Header } from './components/Header'
 import { SequenceLibrary } from './components/SequenceLibrary'
 import { RecordView } from './components/RecordView'
 import { PlaybackView } from './components/PlaybackView'
 import { useSequences } from './hooks/useSequences'
+import { unlockAudio } from './lib/sounds'
 import type { AppView, Sequence } from './types'
 
 export default function App() {
+  // Unlock Web Audio on first user interaction (required for iOS)
+  useEffect(() => {
+    const handler = () => {
+      unlockAudio()
+      window.removeEventListener('touchstart', handler)
+      window.removeEventListener('mousedown', handler)
+    }
+    window.addEventListener('touchstart', handler, { once: true })
+    window.addEventListener('mousedown', handler, { once: true })
+    return () => {
+      window.removeEventListener('touchstart', handler)
+      window.removeEventListener('mousedown', handler)
+    }
+  }, [])
   const [view, setView] = useState<AppView>('library')
   const [activeSequence, setActiveSequence] = useState<Sequence | null>(null)
   const [editSequence, setEditSequence] = useState<Sequence | null>(null)
