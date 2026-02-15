@@ -56,6 +56,19 @@ export function useChessGame() {
     return applyMove(from, to)
   }, [applyMove])
 
+  // Helper: select a piece only if it has legal moves
+  const selectPiece = useCallback((square: string) => {
+    const sqMoves = game.moves({ square: square as any, verbose: true })
+    if (sqMoves.length > 0) {
+      setSelectedSquare(square)
+      setLegalMoves(sqMoves.map((m) => m.to))
+    } else {
+      // No legal moves → don't select, clear any previous selection
+      setSelectedSquare(null)
+      setLegalMoves([])
+    }
+  }, [game])
+
   const handleSquareClick = useCallback((square: string) => {
     if (selectedSquare) {
       // Click same square again → deselect
@@ -69,12 +82,10 @@ export function useChessGame() {
       const moved = applyMove(selectedSquare, square)
       if (moved) return
 
-      // Clicked a different friendly piece → switch selection
+      // Clicked a different friendly piece → switch selection (only if it has moves)
       const piece = game.get(square as any)
       if (piece && piece.color === game.turn()) {
-        setSelectedSquare(square)
-        const sqMoves = game.moves({ square: square as any, verbose: true })
-        setLegalMoves(sqMoves.map((m) => m.to))
+        selectPiece(square)
         return
       }
 
@@ -86,22 +97,20 @@ export function useChessGame() {
 
     const piece = game.get(square as any)
     if (piece && piece.color === game.turn()) {
-      setSelectedSquare(square)
-      const sqMoves = game.moves({ square: square as any, verbose: true })
-      setLegalMoves(sqMoves.map((m) => m.to))
+      selectPiece(square)
     }
-  }, [game, selectedSquare, applyMove])
+  }, [game, selectedSquare, applyMove, selectPiece])
 
   const undoMove = useCallback(() => {
     if (moves.length === 0) return
-    const gameCopy = new Chess(game.fen())
-    gameCopy.undo()
-    setGame(gameCopy)
+    // Rebuild from the previous FEN (fens has one more entry than moves)
+    const previousFen = fens[fens.length - 2]
+    setGame(new Chess(previousFen))
     setMoves((prev) => prev.slice(0, -1))
     setFens((prev) => prev.slice(0, -1))
     setSelectedSquare(null)
     setLegalMoves([])
-  }, [game, moves.length])
+  }, [moves.length, fens])
 
   const reset = useCallback(() => {
     setGame(new Chess())
