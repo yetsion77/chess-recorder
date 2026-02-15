@@ -186,12 +186,12 @@ export function RecordView({ editSequence, onSave, onUpdate, onCancel }: RecordV
 
             {/* Checkmate overlay */}
             {isCheckmate && (
-              <div className="checkmate-overlay absolute inset-0 flex items-center justify-center bg-black/30">
-                <div className="checkmate-badge rounded-2xl bg-gradient-to-br from-red-600 to-red-800 px-8 py-4 shadow-2xl shadow-red-500/30">
-                  <div className="text-center text-3xl font-black text-white">
-                    מט!
+              <div className="checkmate-overlay pointer-events-none absolute inset-0 flex items-end justify-center pb-4">
+                <div className="checkmate-badge rounded-2xl bg-gradient-to-br from-red-600/90 to-red-800/90 px-6 py-3 shadow-2xl shadow-red-500/40 ring-2 ring-red-400/30">
+                  <div className="text-center text-2xl font-black text-white" dir="rtl">
+                    !מט
                   </div>
-                  <div className="mt-1 text-center text-sm text-red-200">
+                  <div className="mt-0.5 text-center text-xs text-red-200">
                     {turn === 'w' ? 'שחור ניצח' : 'לבן ניצח'}
                   </div>
                 </div>
