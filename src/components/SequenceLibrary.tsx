@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, Search, Loader2, LayoutGrid, BookOpen } from 'lucide-react'
-import type { Sequence, SequenceCategory } from '../types'
+import type { Sequence, SequenceCategory, BoardOrientation } from '../types'
 import { CATEGORY_LABELS } from '../types'
 import { SequenceCard } from './SequenceCard'
 
@@ -32,6 +32,7 @@ export function SequenceLibrary({
 }: SequenceLibraryProps) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<SequenceCategory | 'all'>('all')
+  const [activeColor, setActiveColor] = useState<BoardOrientation | 'all'>('all')
 
   const filtered = sequences.filter((seq) => {
     const matchesSearch =
@@ -40,7 +41,9 @@ export function SequenceLibrary({
       seq.description.toLowerCase().includes(search.toLowerCase())
     const matchesCategory =
       activeCategory === 'all' || seq.category === activeCategory
-    return matchesSearch && matchesCategory
+    const matchesColor =
+      activeColor === 'all' || seq.orientation === activeColor
+    return matchesSearch && matchesCategory && matchesColor
   })
 
   return (
@@ -76,7 +79,7 @@ export function SequenceLibrary({
           />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {ALL_CATEGORIES.map((cat) => (
             <button
               key={cat}
@@ -88,6 +91,25 @@ export function SequenceLibrary({
               }`}
             >
               {cat === 'all' ? 'הכל' : CATEGORY_LABELS[cat]}
+            </button>
+          ))}
+
+          <div className="mx-1 h-6 w-px bg-white/10" />
+
+          {(['all', 'white', 'black'] as const).map((color) => (
+            <button
+              key={color}
+              onClick={() => setActiveColor(color)}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                activeColor === color
+                  ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30'
+                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              {color !== 'all' && (
+                <span className={`inline-block h-3 w-3 rounded-full border border-slate-500 ${color === 'white' ? 'bg-white' : 'bg-slate-900'}`} />
+              )}
+              {color === 'all' ? 'כל הצבעים' : color === 'white' ? 'לבן' : 'שחור'}
             </button>
           ))}
         </div>
